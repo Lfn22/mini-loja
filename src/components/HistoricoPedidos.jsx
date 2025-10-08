@@ -1,34 +1,37 @@
 import React from "react";
+import { useAuth } from "../context/AuthContext.jsx";
 
-function HistoricoPedidos({ pedidos }) {
+export default function HistoricoPedidos({ orders = [] }) {
+  const { user } = useAuth();
+
+  if (!user) {
+    return (
+      <div className="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+        <h2 className="text-xl font-bold mb-4">Histórico</h2>
+        <p>Faça login para ver seu histórico de pedidos.</p>
+      </div>
+    );
+  }
+
+  const myOrders = orders.filter(o => o.user === user.username);
+
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Histórico de Pedidos</h2>
-      {pedidos.length === 0 ? (
-        <p>Nenhum pedido realizado ainda.</p>
-      ) : (
-        pedidos.map((pedido) => (
-          <div
-            key={pedido.id}
-            className="border rounded p-4 mb-4 bg-white shadow"
-          >
-            <p className="font-bold">Pedido #{pedido.id}</p>
-            <p>Cliente: {pedido.cliente.nome}</p>
-            <p>Email: {pedido.cliente.email}</p>
-            <p>Endereço: {pedido.cliente.endereco}</p>
-            <p>Data: {pedido.data}</p>
-            <ul className="list-disc ml-6">
-              {pedido.itens.map((item) => (
-                <li key={item.id}>
-                  {item.title} x {item.qtd}
-                </li>
-              ))}
-            </ul>
+    <div className="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+      <h2 className="text-xl font-bold mb-4">📦 Seu Histórico</h2>
+      {myOrders.length === 0 ? <p>Nenhum pedido registrado.</p> : myOrders.slice().reverse().map(o => (
+        <div key={o.id} className="border rounded p-3 mb-3 bg-gray-50">
+          <div className="flex justify-between">
+            <div>
+              <strong>Pedido #{o.id}</strong>
+              <div className="text-sm text-gray-600">{o.date}</div>
+            </div>
+            <div className="font-bold">R$ {o.total.toFixed(2)}</div>
           </div>
-        ))
-      )}
+          <ul className="mt-2 ml-4 list-disc">
+            {o.items.map(it => <li key={it.id}>{it.title} x {it.qty} — R$ {(it.price*it.qty).toFixed(2)}</li>)}
+          </ul>
+        </div>
+      ))}
     </div>
   );
 }
-
-export default HistoricoPedidos;
