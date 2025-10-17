@@ -1,45 +1,36 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { getItem, setItem, removeItem } from "../services/storageServices.js";
+import React, { createContext, useState, useContext } from "react";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(getItem("currentUser", null));
+  const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    if (user) setItem("currentUser", user);
-    else removeItem("currentUser");
-  }, [user]);
+  // Usuários mockados
+  const mockUsers = [
+    { email: "teste@teste.com", password: "123456", name: "Usuário Teste" },
+    { email: "admin@admin.com", password: "admin", name: "Admin" },
+  ];
 
-  function register({ username, password, name, email }) {
-    const users = getItem("users", []);
-    if (users.find((u) => u.username === username)) {
-      throw new Error("Usuário já existe");
+  const login = (email, password) => {
+    const foundUser = mockUsers.find(
+      (u) => u.email === email && u.password === password
+    );
+    if (foundUser) {
+      setUser(foundUser);
+      return true;
     }
-    const newUser = { username, password, name, email };
-    users.push(newUser);
-    setItem("users", users);
-    setUser({ username, name, email });
-    return newUser;
-  }
+    return false;
+  };
 
-  function login({ username, password }) {
-    const users = getItem("users", []);
-    const u = users.find((x) => x.username === username && x.password === password);
-    if (!u) throw new Error("Credenciais inválidas");
-    setUser({ username: u.username, name: u.name, email: u.email });
-    return u;
-  }
-
-  function logout() {
+  const logout = () => {
     setUser(null);
-  }
+  };
 
-  return <AuthContext.Provider value={{ user, register, login, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
-  return ctx;
-}
+export const useAuth = () => useContext(AuthContext);

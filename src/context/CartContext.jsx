@@ -1,67 +1,77 @@
-import React, { createContext, useContext, useEffect, useReducer, useMemo } from "react";
-import { getItem, setItem } from "../services/storageServices.js";
+// src/context/CartContext.jsx
+import React, { createContext, useContext, useState, useEffect } from "react";
 
+// Criando o contexto
 const CartContext = createContext();
 
-const initialState = {
-  items: Array.isArray(getItem("cart")) ? getItem("cart") : [],
-};
-
-function reducer(state, action) {
-  switch (action.type) {
-    case "ADD": {
-      const p = action.payload;
-      const exists = state.items.find((it) => it.id === p.id);
-      const updated = exists
-        ? state.items.map((it) => (it.id === p.id ? { ...it, qty: it.qty + 1 } : it))
-        : [...state.items, { ...p, qty: 1 }];
-      return { ...state, items: updated };
-    }
-    case "CHANGE_QTY": {
-      const { id, delta } = action.payload;
-      return {
-        ...state,
-        items: state.items
-          .map((it) => (it.id === id ? { ...it, qty: Math.max(1, it.qty + delta) } : it))
-          .filter((it) => it.qty > 0),
-      };
-    }
-    case "REMOVE":
-      return { ...state, items: state.items.filter((it) => it.id !== action.payload) };
-    case "CLEAR":
-      return { ...state, items: [] };
-    case "SET":
-      return { ...state, items: action.payload };
-    default:
-      return state;
-  }
-}
-
+// Provider
 export function CartProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [cartItems, setCartItems] = useState([]);
+  const [historico, setHistorico] = useState([]);
 
+  // 🔄 Carregar histórico salvo (para não sumir ao recarregar a página)
   useEffect(() => {
-    setItem("cart", state.items);
-  }, [state.items]);
+    const saved = localStorage.getItem("historico");
+    if (saved) {
+      setHistorico(JSON.parse(saved));
+    }
+  }, []);
 
-  const add = (product) => dispatch({ type: "ADD", payload: product });
-  const changeQty = (id, delta) => dispatch({ type: "CHANGE_QTY", payload: { id, delta } });
-  const remove = (id) => dispatch({ type: "REMOVE", payload: id });
-  const clear = () => dispatch({ type: "CLEAR" });
-  const set = (items) => dispatch({ type: "SET", payload: items });
+  // 💾 Salvar histórico sempre que ele muda
+  useEffect(() => {
+    localStorage.setItem("historico", JSON.stringify(historico));
+  }, [historico]);
 
-  const total = useMemo(() => state.items.reduce((s, it) => s + it.price * it.qty, 0), [state.items]);
-  const itemCount = useMemo(() => state.items.reduce((s, it) => s + it.qty, 0), [state.items]);
+  const addToCart = (product) => setCartItems((prev) => [...prev, product]);
+
+  const removeFromCart = (productId) =>
+    setCartItems((prev) => prev.filter((item) => item.id !== productId));
+
+  const clearCart = () => setCartItems([]);
+
+  // 🧾 Checkout agora salva o pedido no histórico
+  const checkout = () => {
+    if (cartItems.length === 0) {
+      alert("Seu carrinho está vazio!");
+      return;
+    }
+
+    const novoPedido = {
+      id: Date.now(),
+      items: cartItems,
+      total: cartItems.reduce(
+        (acc, item) => acc + (item.price || 0) * (item.quantity || 1),
+        0
+      ),
+      date: new Date(),
+    };
+
+    setHistorico((prev) => [...prev, novoPedido]);
+    alert("Compra finalizada com sucesso!");
+    clearCart();
+  };
 
   return (
-    <CartContext.Provider value={{ items: state.items, add, changeQty, remove, clear, set, total, itemCount }}>
+    <CartContext.Provider
+      value={{
+        cartItems,
+        addToCart,
+        removeFromCart,
+        clearCart,
+        checkout,
+        historico,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
 }
 
+// Hook customizado para usar o contexto
 export function useCart() {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart must be used inside CartProvider");
-  return ctx;
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error("useCart deve ser usado dentro de um CartProvider");
+  }
+  return context;
 }

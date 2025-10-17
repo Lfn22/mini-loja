@@ -1,61 +1,58 @@
-import React, { useEffect, useState } from "react";
-import { Routes, Route } from "react-router-dom";
-import Header from "./components/Header.jsx";
-import ProductList from "./components/ProductList.jsx";
-import Cart from "./components/Cart.jsx";
-import Login from "./components/Login.jsx";
-import HistoricoPedidos from "./components/HistoricoPedidos.jsx";
-import Carousel from "./components/Carousel.jsx";
-import { fetchProducts } from "./services/productService.js";
-import { useToast } from "./context/ToastContext.jsx";
+import React, { Suspense, lazy } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Header from "@/components/Header";
+import { useAuth } from "@/context/AuthContext";
+
+// Lazy load
+const ProductList = lazy(() => import("@/components/ProductList"));
+const Cart = lazy(() => import("@/components/Cart"));
+const Checkout = lazy(() => import("@/components/Checkout"));
+const HistoricoPedidos = lazy(() => import("@/components/HistoricoPedidos"));
+const Login = lazy(() => import("@/components/Login"));
+
+// Error Boundary
+class ErrorBoundary extends React.Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("ErrorBoundary:", error, info);
+  }
+
+  render() {
+    if (this.state.hasError) return <h1 className="text-center mt-10">Ocorreu um erro ao carregar a página.</h1>;
+    return this.props.children;
+  }
+}
 
 export default function App() {
-  const [products, setProducts] = useState([]);
-  const [cartVisible, setCartVisible] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const { push } = useToast();
-
-  useEffect(() => {
-    let isMounted = true;
-    const loadProducts = async () => {
-      try {
-        const data = await fetchProducts();
-        if (isMounted) setProducts(data);
-      } catch {
-        push("Erro ao carregar produtos", "error");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadProducts();
-    return () => (isMounted = false);
-  }, []);
+  const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header onCartToggle={() => setCartVisible(!cartVisible)} />
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <>
-                <Carousel />
-                {loading ? (
-                  <div className="flex justify-center py-10 text-gray-500">
-                    Carregando produtos...
-                  </div>
-                ) : (
-                  <ProductList products={products} />
-                )}
-              </>
-            }
-          />
-          <Route path="/login" element={<Login />} />
-          <Route path="/historico" element={<HistoricoPedidos orders={[]} />} />
-        </Routes>
-      </main>
-      {cartVisible && <Cart />}
-    </div>
+    <Router>
+      <div className="min-h-screen bg-gray-50 text-gray-900">
+        <Header />
+        <ErrorBoundary>
+          <Suspense fallback={<p className="text-center mt-10">Carregando...</p>}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              {user ? (
+                <>
+                  <Route path="/" element={<ProductList />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/historico" element={<HistoricoPedidos />} />
+                  <Route path="/cart" element={<Cart />} />
+                </>
+              ) : (
+                <Route path="*" element={<Navigate to="/login" replace />} />
+              )}
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
+      </div>
+    </Router>
   );
 }

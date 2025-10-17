@@ -1,11 +1,10 @@
 // src/components/SkeletonCard.jsx
 export default function SkeletonCard() {
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 flex flex-col h-full animate-pulse">
-      <div className="h-48 bg-gray-200 rounded mb-4"></div>
-      <div className="h-4 bg-gray-200 rounded mb-2 w-3/4"></div>
-      <div className="h-3 bg-gray-200 rounded mb-2 w-full"></div>
-      <div className="h-8 bg-gray-200 rounded mt-auto w-32"></div>
+    <div className="bg-white p-4 rounded shadow animate-pulse h-64">
+      <div className="bg-gray-300 h-40 mb-4 rounded"></div>
+      <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
     </div>
   );
 }

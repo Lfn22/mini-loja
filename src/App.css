@@ -1,11 +1,71 @@
-/* App-level small customizations (optional) */
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ======= THEME CONFIG ======= */
+:root {
+  --primary: #2563eb; /* Azul principal */
+  --secondary: #1e293b; /* Azul escuro */
+  --accent: #facc15; /* Amarelo destaque */
+  --bg: #f8fafc; /* Fundo claro */
+  --text: #0f172a; /* Texto principal */
 }
 
-/* make sure elements have accessible focus */
-:focus {
-  outline: 3px solid rgba(59,130,246,0.5);
-  outline-offset: 2px;
+body {
+  @apply bg-[var(--bg)] text-[var(--text)] font-sans;
+}
+
+/* ======= COMPONENT STYLES ======= */
+.container {
+  @apply mx-auto px-4 md:px-8;
+}
+
+.btn-primary {
+  @apply bg-[var(--primary)] text-white px-4 py-2 rounded-md shadow hover:bg-blue-700 transition-all duration-300;
+}
+
+.btn-secondary {
+  @apply bg-[var(--secondary)] text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-all;
+}
+
+/* ======= PRODUCT CARD ENHANCEMENT ======= */
+.product-card {
+  @apply bg-white shadow-md rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300;
+}
+
+.product-card img {
+  @apply w-full h-48 object-contain bg-gray-100;
+}
+
+.product-card .info {
+  @apply p-4 flex flex-col gap-2;
+}
+
+.product-card .price {
+  @apply text-lg font-semibold text-[var(--primary)];
+}
+
+/* ======= HEADER ENHANCEMENT ======= */
+header {
+  @apply sticky top-0 bg-white shadow z-50 transition-all;
+}
+
+header .logo {
+  @apply text-xl font-bold text-[var(--primary)] hover:opacity-80;
+}
+
+/* ======= ANIMATIONS ======= */
+.fade-in {
+  animation: fadeIn 0.6s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

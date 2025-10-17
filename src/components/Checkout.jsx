@@ -1,31 +1,53 @@
-import React, { useState } from "react";
-import { useCart } from "../context/CartContext.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
+import React from "react";
+import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
+import { getItem, setItem } from "@/services/storageServices";
 
-export default function Checkout({ onConfirm }) {
-  const { items, clear, total } = useCart();
+export default function Checkout() {
+  const { cart, clearCart } = useCart();
   const { user } = useAuth();
-  const [form, setForm] = useState({ name: user?.name || "", email: user?.email || "", address: "" });
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (!form.name || !form.email || !form.address) return alert("Preencha todos os campos");
-    onConfirm?.({ items, customer: form, total, user });
-    clear();
-  }
+  const handleCheckout = () => {
+    if (cart.length === 0) return alert("Carrinho vazio!");
 
-  if (!items.length) return <div className="max-w-lg mx-auto bg-white p-6 rounded shadow">Seu carrinho está vazio.</div>;
+    const orders = getItem("orders") || [];
+    const newOrder = {
+      id: orders.length + 1,
+      user: user?.name,
+      date: new Date(),
+      items: cart,
+    };
+    setItem("orders", [...orders, newOrder]);
+    clearCart();
+    alert("Compra finalizada com sucesso!");
+  };
+
+  if (cart.length === 0) return null;
+
+  const total = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   return (
-    <div className="max-w-lg mx-auto bg-white p-6 rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Finalizar Compra</h2>
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input name="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome" className="w-full p-2 border rounded" />
-        <input name="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="E-mail" className="w-full p-2 border rounded" />
-        <input name="address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Endereço" className="w-full p-2 border rounded" />
-        <div className="text-right font-bold">Total: R$ {total.toFixed(2)}</div>
-        <button type="submit" className="w-full bg-green-500 text-white py-2 rounded">Confirmar Pedido</button>
-      </form>
+    <div className="max-w-3xl mx-auto bg-white shadow-md p-6 rounded-xl mt-10">
+      <h2 className="text-xl font-bold mb-4">Resumo da Compra</h2>
+      <ul className="text-gray-700 mb-4">
+        {cart.map((item) => (
+          <li key={item.id}>
+            {item.name} — {item.quantity}x R${item.price.toFixed(2)}
+          </li>
+        ))}
+      </ul>
+      <p className="text-lg font-semibold mb-4">
+        Total: R$ {total.toFixed(2)}
+      </p>
+      <button
+        onClick={handleCheckout}
+        className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-all"
+      >
+        Finalizar Compra
+      </button>
     </div>
   );
 }

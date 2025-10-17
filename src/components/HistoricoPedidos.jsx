@@ -1,37 +1,36 @@
 import React from "react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useCart } from "../context/CartContext";
 
-export default function HistoricoPedidos({ orders = [] }) {
-  const { user } = useAuth();
-
-  if (!user) {
-    return (
-      <div className="max-w-3xl mx-auto bg-white p-6 rounded shadow">
-        <h2 className="text-xl font-bold mb-4">Histórico</h2>
-        <p>Faça login para ver seu histórico de pedidos.</p>
-      </div>
-    );
-  }
-
-  const myOrders = orders.filter(o => o.user === user.username);
+export default function HistoricoPedidos() {
+  const { historico = [] } = useCart() || {}; // garante array
 
   return (
-    <div className="max-w-3xl mx-auto bg-white p-6 rounded shadow">
-      <h2 className="text-xl font-bold mb-4">📦 Seu Histórico</h2>
-      {myOrders.length === 0 ? <p>Nenhum pedido registrado.</p> : myOrders.slice().reverse().map(o => (
-        <div key={o.id} className="border rounded p-3 mb-3 bg-gray-50">
-          <div className="flex justify-between">
-            <div>
-              <strong>Pedido #{o.id}</strong>
-              <div className="text-sm text-gray-600">{o.date}</div>
+    <div className="px-4 py-8 max-w-6xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
+        Histórico de Pedidos
+      </h2>
+
+      {historico.length === 0 ? (
+        <p className="text-center text-gray-500">
+          Você ainda não realizou nenhum pedido.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {historico.map((pedido, index) => (
+            <div
+              key={pedido.id || index}
+              className="border rounded-lg p-4 bg-white shadow-sm"
+            >
+              <h3 className="font-semibold mb-2">{pedido.name}</h3>
+              <p className="text-gray-600">Quantidade: {pedido.quantity}</p>
+              <p className="text-gray-600">Total: R$ {pedido.total}</p>
+              <p className="text-gray-500 text-sm mt-2">
+                {new Date(pedido.date).toLocaleDateString()}
+              </p>
             </div>
-            <div className="font-bold">R$ {o.total.toFixed(2)}</div>
-          </div>
-          <ul className="mt-2 ml-4 list-disc">
-            {o.items.map(it => <li key={it.id}>{it.title} x {it.qty} — R$ {(it.price*it.qty).toFixed(2)}</li>)}
-          </ul>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }

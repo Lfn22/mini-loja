@@ -1,57 +1,36 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useCart } from "../context/CartContext.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
 
-export default function Header({ onCartToggle }) {
-  const { itemCount } = useCart();
+export default function Header() {
   const { user, logout } = useAuth();
+  const { cartItems } = useCart();
 
   return (
-    <header className="bg-blue-600 text-white p-4 shadow">
-      <div className="max-w-7xl mx-auto flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <Link to="/" className="text-xl font-bold">
-            Mini Loja
-          </Link>
-          <Link to="/" className="hover:underline">
-            Produtos
-          </Link>
-          <Link to="/historico" className="hover:underline">
-            Histórico
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {user ? (
-            <>
-              <span className="bg-white text-blue-700 px-3 py-1 rounded">
-                Olá, {user.name || user.username}
+    <header className="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+      <h1 className="text-xl font-bold">
+        <Link to="/">Mini Loja</Link>
+      </h1>
+      {user && (
+        <nav className="flex items-center gap-4">
+          <Link to="/historico" className="hover:underline">Histórico</Link>
+          <Link to="/cart" className="relative hover:underline">
+            Carrinho
+            {cartItems.length > 0 && (
+              <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs rounded-full px-2">
+                {cartItems.length}
               </span>
-              <button
-                onClick={() => logout()}
-                className="px-3 py-1 bg-red-500 rounded hover:bg-red-600"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <Link
-              to="/login"
-              className="px-3 py-1 bg-white text-blue-700 rounded hover:bg-gray-100"
-            >
-              Login
-            </Link>
-          )}
+            )}
+          </Link>
           <button
-            onClick={onCartToggle}
-            className="px-3 py-1 bg-white text-blue-700 rounded hover:bg-gray-100"
-            aria-label="Ver carrinho"
+            onClick={logout}
+            className="bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
           >
-            🛒 {itemCount}
+            Sair
           </button>
-        </div>
-      </div>
+        </nav>
+      )}
     </header>
   );
 }
