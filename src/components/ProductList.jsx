@@ -1,46 +1,52 @@
-// src/components/ProductList.jsx
-import React, { useState, useEffect } from "react";
-import ProductCard from "./ProductCard";
-import Pagination from "./Pagination";
-import SkeletonCard from "./SkeletonCard";
-import { fetchProducts } from "../services/api";
-import { useCart } from "../context/CartContext";
+import React, { useState, useEffect } from 'react';
+import ProductCard from '@/components/ProductCard.jsx';
+import Pagination from '@/components/Pagination.jsx';
+import SkeletonCard from '@/components/SkeletonCard.jsx';
+import { fetchProducts } from '@/services/api.js';
+import { useCart } from '@/context/CartContext.jsx';
 
+/**
+ * Lista de produtos com paginação e loading state.  Busca dados da API
+ * na montagem do componente e exibe um skeleton enquanto a resposta
+ * não chega.  Permite adicionar produtos ao carrinho através do
+ * contexto.
+ */
 export default function ProductList() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const productsPerPage = 9;
-
-  const { addToCart } = useCart(); // hook para adicionar ao carrinho
+  const itemsPerPage = 9;
+  const { addToCart } = useCart();
 
   useEffect(() => {
-    setLoading(true);
-    fetchProducts()
-      .then((data) => {
+    let isMounted = true;
+    async function load() {
+      setLoading(true);
+      const data = await fetchProducts();
+      if (isMounted) {
         setProducts(data);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
+        setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const indexOfLast = currentPage * productsPerPage;
-  const indexOfFirst = indexOfLast - productsPerPage;
+  // Pega um pedaço do array de produtos com base na página atual
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
   const currentProducts = products.slice(indexOfFirst, indexOfLast);
-
-  const handleAddToCart = (product) => {
-    addToCart(product);
-  };
 
   return (
     <div className="px-4 py-8 max-w-6xl mx-auto">
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
         Nossos Produtos
       </h2>
-
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: productsPerPage }).map((_, i) => (
+          {Array.from({ length: itemsPerPage }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
@@ -51,14 +57,13 @@ export default function ProductList() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onAddToCart={() => handleAddToCart(product)}
+                onAddToCart={addToCart}
               />
             ))}
           </div>
-
           <Pagination
             totalItems={products.length}
-            itemsPerPage={productsPerPage}
+            itemsPerPage={itemsPerPage}
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
           />

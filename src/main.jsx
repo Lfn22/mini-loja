@@ -1,22 +1,19 @@
-// src/main.jsx
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App.jsx";
-import "./index.css";
-import "./App.css";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from '@/App.jsx';
+import { AuthProvider } from '@/context/AuthContext.jsx';
+import { CartProvider } from '@/context/CartContext.jsx';
+import '@/index.css';
 
-import { AuthProvider } from "./context/AuthContext.jsx";
-import { CartProvider } from "./context/CartContext.jsx";
-import { ToastProvider } from "./context/ToastContext.jsx";
-
-ReactDOM.createRoot(document.getElementById("root")).render(
+// Ponto de entrada da aplicação.  O AuthProvider e CartProvider
+// englobam a árvore de componentes para disponibilizar autenticação
+// e carrinho globalmente.  O arquivo index.css importa Tailwind.
+ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ToastProvider>
-      <AuthProvider>
-        <CartProvider>
-          <App />
-        </CartProvider>
-      </AuthProvider>
-    </ToastProvider>
-  </React.StrictMode>
+    <AuthProvider>
+      <CartProvider>
+        <App />
+      </CartProvider>
+    </AuthProvider>
+  </React.StrictMode>,
 );

@@ -2,7 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Linha opcional para truncar texto */
+/* Utility class for truncating text after two lines.  This helper
+   uses WebKit-specific line clamping to gracefully shorten long
+   product names without cutting off words mid-character. */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;

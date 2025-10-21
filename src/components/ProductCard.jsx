@@ -1,19 +1,29 @@
-// src/components/ProductCard.jsx
+import React from 'react';
+
+/**
+ * Exibe um produto individual.  Recebe o objeto do produto e uma
+ * função de callback para adicionar ao carrinho.  A imagem e o nome
+ * são limitados em altura para manter o layout consistente.
+ */
 export default function ProductCard({ product, onAddToCart }) {
   return (
-    <div className="bg-white p-4 rounded shadow flex flex-col">
-      <img
-        src={product.image}
-        alt={product.title}
-        className="h-40 object-contain mb-4"
-      />
-      <h3 className="font-bold">{product.title}</h3>
-      <p className="text-gray-600">{product.price.toFixed(2)} R$</p>
+    <div className="bg-white p-4 rounded shadow hover:shadow-md transition-all">
+      <div className="h-40 flex items-center justify-center mb-4">
+        <img
+          src={product.image}
+          alt={product.title}
+          className="max-h-full object-contain"
+        />
+      </div>
+      <h3 className="text-md font-semibold mb-2 line-clamp-2">
+        {product.title}
+      </h3>
+      <p className="text-blue-600 font-bold mb-4">R$ {product.price.toFixed(2)}</p>
       <button
-        onClick={onAddToCart}
-        className="mt-auto bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+        onClick={() => onAddToCart(product)}
+        className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600"
       >
-        Adicionar ao Carrinho
+        Adicionar ao carrinho
       </button>
     </div>
   );

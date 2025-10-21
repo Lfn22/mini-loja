@@ -1,24 +1,27 @@
-import React, { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useAuth } from '@/context/AuthContext.jsx';
+import { useNavigate } from 'react-router-dom';
 
+/**
+ * Formulário simples de login.  Utiliza o contexto de autenticação
+ * para validar as credenciais.  Em caso de sucesso, redireciona o
+ * usuário para a página de produtos.
+ */
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
-
   const handleSubmit = (e) => {
     e.preventDefault();
     const success = login(email, password);
     if (success) {
-      navigate("/"); // vai para a lista de produtos
+      navigate('/');
     } else {
-      setError("Email ou senha incorretos");
+      setError('Email ou senha incorretos');
     }
   };
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <form
@@ -49,6 +52,12 @@ export default function Login() {
         >
           Entrar
         </button>
+        <p className="text-center mt-4 text-sm">
+          Ainda não tem conta?{' '}
+          <a href="/register" className="text-blue-500 hover:underline">
+            Cadastre-se
+          </a>
+        </p>
       </form>
     </div>
   );

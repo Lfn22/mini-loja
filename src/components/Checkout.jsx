@@ -1,41 +1,26 @@
-import React from "react";
-import { useCart } from "@/context/CartContext";
-import { useAuth } from "@/context/AuthContext";
-import { getItem, setItem } from "@/services/storageServices";
+import React from 'react';
+import { useCart } from '@/context/CartContext.jsx';
 
+/**
+ * Página de resumo da compra.  Mostra uma lista de itens com
+ * quantidades e preço total.  Quando o usuário confirma, chama a
+ * função de checkout do contexto, que adiciona o pedido ao
+ * histórico e limpa o carrinho.
+ */
 export default function Checkout() {
-  const { cart, clearCart } = useCart();
-  const { user } = useAuth();
-
-  const handleCheckout = () => {
-    if (cart.length === 0) return alert("Carrinho vazio!");
-
-    const orders = getItem("orders") || [];
-    const newOrder = {
-      id: orders.length + 1,
-      user: user?.name,
-      date: new Date(),
-      items: cart,
-    };
-    setItem("orders", [...orders, newOrder]);
-    clearCart();
-    alert("Compra finalizada com sucesso!");
-  };
-
-  if (cart.length === 0) return null;
-
-  const total = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
+  const { cartItems, checkout } = useCart();
+  if (cartItems.length === 0) return null;
+  const total = cartItems.reduce(
+    (sum, item) => sum + (item.price || 0) * item.quantity,
+    0,
   );
-
   return (
     <div className="max-w-3xl mx-auto bg-white shadow-md p-6 rounded-xl mt-10">
       <h2 className="text-xl font-bold mb-4">Resumo da Compra</h2>
       <ul className="text-gray-700 mb-4">
-        {cart.map((item) => (
-          <li key={item.id}>
-            {item.name} — {item.quantity}x R${item.price.toFixed(2)}
+        {cartItems.map((item) => (
+          <li key={item.id} className="mb-1">
+            {item.quantity}× {item.title} — R$ {item.price.toFixed(2)}
           </li>
         ))}
       </ul>
@@ -43,7 +28,7 @@ export default function Checkout() {
         Total: R$ {total.toFixed(2)}
       </p>
       <button
-        onClick={handleCheckout}
+        onClick={checkout}
         className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-all"
       >
         Finalizar Compra

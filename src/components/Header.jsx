@@ -1,12 +1,16 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { useCart } from "@/context/CartContext";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext.jsx';
+import { useCart } from '@/context/CartContext.jsx';
 
+/**
+ * Cabeçalho fixo com a marca da aplicação e navegação.  Exibe o
+ * número de itens no carrinho e permite sair (logout) se o usuário
+ * estiver autenticado.
+ */
 export default function Header() {
   const { user, logout } = useAuth();
   const { cartItems } = useCart();
-
   return (
     <header className="bg-white shadow-md py-4 px-6 flex justify-between items-center">
       <h1 className="text-xl font-bold">
@@ -14,7 +18,9 @@ export default function Header() {
       </h1>
       {user && (
         <nav className="flex items-center gap-4">
-          <Link to="/historico" className="hover:underline">Histórico</Link>
+          <Link to="/historico" className="hover:underline">
+            Histórico
+          </Link>
           <Link to="/cart" className="relative hover:underline">
             Carrinho
             {cartItems.length > 0 && (

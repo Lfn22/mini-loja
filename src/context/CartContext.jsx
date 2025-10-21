@@ -1,65 +1,154 @@
-// src/context/CartContext.jsx
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import {
+  getLocalItem,
+  setLocalItem,
+} from '@/services/storageServices.js';
 
-// Criando o contexto
+/**
+ * Estado inicial para o carrinho.  Contém uma lista de itens e
+ * pedidos anteriores (histórico).  Cada item possui as propriedades
+ * do produto mais um campo `quantity` representando quantas unidades
+ * foram adicionadas.
+ */
+const initialState = {
+  items: [],
+  history: [],
+};
+
+/**
+ * Redutor para manipular as ações do carrinho.  Mantém
+ * imutabilidade retornando um novo estado a cada ação.
+ */
+function cartReducer(state, action) {
+  switch (action.type) {
+    case 'LOAD': {
+      // Carregamento inicial de itens e histórico a partir do
+      // localStorage.
+      return {
+        items: action.payload.items || [],
+        history: action.payload.history || [],
+      };
+    }
+    case 'ADD': {
+      const existingIndex = state.items.findIndex(
+        (item) => item.id === action.payload.id,
+      );
+      if (existingIndex >= 0) {
+        // Se o item já existe, incrementa a quantidade
+        const newItems = state.items.map((item, idx) =>
+          idx === existingIndex
+            ? { ...item, quantity: item.quantity + 1 }
+            : item,
+        );
+        return { ...state, items: newItems };
+      }
+      // Para um item novo, inicializa a quantidade em 1
+      return {
+        ...state,
+        items: [...state.items, { ...action.payload, quantity: 1 }],
+      };
+    }
+    case 'REMOVE': {
+      return {
+        ...state,
+        items: state.items.filter((item) => item.id !== action.payload),
+      };
+    }
+    case 'UPDATE_QUANTITY': {
+      const { id, quantity } = action.payload;
+      if (quantity < 1) {
+        // Remove o item quando a quantidade é zero ou negativa
+        return {
+          ...state,
+          items: state.items.filter((item) => item.id !== id),
+        };
+      }
+      const updatedItems = state.items.map((item) =>
+        item.id === id ? { ...item, quantity } : item,
+      );
+      return { ...state, items: updatedItems };
+    }
+    case 'CLEAR': {
+      return { ...state, items: [] };
+    }
+    case 'ADD_HISTORY': {
+      return { ...state, history: [...state.history, action.payload] };
+    }
+    default:
+      return state;
+  }
+}
+
 const CartContext = createContext();
 
-// Provider
 export function CartProvider({ children }) {
-  const [cartItems, setCartItems] = useState([]);
-  const [historico, setHistorico] = useState([]);
+  const [state, dispatch] = useReducer(cartReducer, initialState);
 
-  // 🔄 Carregar histórico salvo (para não sumir ao recarregar a página)
+  // No início da aplicação carregamos dados salvos
   useEffect(() => {
-    const saved = localStorage.getItem("historico");
-    if (saved) {
-      setHistorico(JSON.parse(saved));
-    }
+    const savedItems = getLocalItem('cartItems') || [];
+    const savedHistory = getLocalItem('orderHistory') || [];
+    dispatch({ type: 'LOAD', payload: { items: savedItems, history: savedHistory } });
   }, []);
 
-  // 💾 Salvar histórico sempre que ele muda
+  // Persistir alterações do carrinho
   useEffect(() => {
-    localStorage.setItem("historico", JSON.stringify(historico));
-  }, [historico]);
+    setLocalItem('cartItems', state.items);
+    setLocalItem('orderHistory', state.history);
+  }, [state.items, state.history]);
 
-  const addToCart = (product) => setCartItems((prev) => [...prev, product]);
+  // Adiciona produto ao carrinho
+  const addToCart = (product) => {
+    dispatch({ type: 'ADD', payload: product });
+  };
 
-  const removeFromCart = (productId) =>
-    setCartItems((prev) => prev.filter((item) => item.id !== productId));
+  // Remove item completamente
+  const removeFromCart = (id) => {
+    dispatch({ type: 'REMOVE', payload: id });
+  };
 
-  const clearCart = () => setCartItems([]);
+  // Atualiza quantidade de um item existente
+  const updateQuantity = (id, quantity) => {
+    dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
+  };
 
-  // 🧾 Checkout agora salva o pedido no histórico
+  // Esvazia carrinho
+  const clearCart = () => {
+    dispatch({ type: 'CLEAR' });
+  };
+
+  // Finaliza a compra: adiciona pedido ao histórico e limpa carrinho
   const checkout = () => {
-    if (cartItems.length === 0) {
-      alert("Seu carrinho está vazio!");
+    if (state.items.length === 0) {
+      alert('Seu carrinho está vazio!');
       return;
     }
-
-    const novoPedido = {
+    // Calcula total e monta pedido
+    const total = state.items.reduce(
+      (sum, item) => sum + (item.price || 0) * item.quantity,
+      0,
+    );
+    const order = {
       id: Date.now(),
-      items: cartItems,
-      total: cartItems.reduce(
-        (acc, item) => acc + (item.price || 0) * (item.quantity || 1),
-        0
-      ),
-      date: new Date(),
+      date: new Date().toISOString(),
+      items: state.items,
+      total,
     };
-
-    setHistorico((prev) => [...prev, novoPedido]);
-    alert("Compra finalizada com sucesso!");
-    clearCart();
+    dispatch({ type: 'ADD_HISTORY', payload: order });
+    dispatch({ type: 'CLEAR' });
+    alert('Compra finalizada com sucesso!');
   };
 
   return (
     <CartContext.Provider
       value={{
-        cartItems,
+        cartItems: state.items,
         addToCart,
         removeFromCart,
+        updateQuantity,
         clearCart,
         checkout,
-        historico,
+        historico: state.history,
       }}
     >
       {children}
@@ -67,11 +156,10 @@ export function CartProvider({ children }) {
   );
 }
 
-// Hook customizado para usar o contexto
 export function useCart() {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error("useCart deve ser usado dentro de um CartProvider");
+    throw new Error('useCart deve ser usado dentro de um CartProvider');
   }
   return context;
 }
